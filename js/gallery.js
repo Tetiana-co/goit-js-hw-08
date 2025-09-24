@@ -1,4 +1,4 @@
-// Дані
+// // Дані для галереї: масив обʼєктів з превʼю, оригіналом і описом картинки
 const images = [
   {
     preview: 'https://cdn.pixabay.com/photo/2019/05/14/16/43/rchids-4202820__480.jpg',
@@ -47,93 +47,145 @@ const images = [
   },
 ];
 
-// 2) Рендер галереї (СТРОГО за шаблоном)
-const galleryContainer = document.querySelector('ul.gallery');
-
-function createImages(items) {
-  return items
+// Знаходимо контейнер галереї в DOM
+const galleryContainer = document.querySelector('.gallery');
+// Рендеримо у галерею список картинок (li > a > img)
+galleryContainer.insertAdjacentHTML(
+  'beforeend',
+  images
     .map(
       ({ preview, original, description }) => `
-<li class="gallery-item">
-  <a class="gallery-link" href="${original}">
-    <img class="gallery-image" src="${preview}" data-source="${original}" alt="${description}" />
-  </a>
-</li>`
+    <li class="gallery-item">
+      <a class="gallery-link" href="${original}">
+        <img class="gallery-image" src="${preview}" data-source="${original}" alt="${description}" />
+      </a>
+    </li>`
     )
-    .join('');
-}
+    .join('')
+);
 
-galleryContainer.insertAdjacentHTML('beforeend', createImages(images));
+// Модалка
+let currentIndex = null; // індекс поточної зображення в модалці
+let instance = null; // екземпляр basicLightbox
+// Відстежуємо клік по галереї
+galleryContainer.addEventListener('click', e => {
+  e.preventDefault(); // забороняємо переходити по href посиланню
+  const img = e.target.closest('.gallery-image'); // шукаємо, що клік був по картинці
+  if (!img) return; // якщо ні - нічого не робимо
+  currentIndex = images.findIndex(x => x.original === img.dataset.source);
 
-// 3) Модалка з навігацією (кнопки + клавіші)
-let currentIndex = null;
-let instance = null;
-
-galleryContainer.addEventListener('click', onGalleryClick);
-
-function onGalleryClick(evt) {
-  evt.preventDefault(); // не завантажуємо зображення по href
-  const img = evt.target.closest('.gallery-image');
-  if (!img) return;
-
-  currentIndex = images.findIndex(i => i.original === img.dataset.source);
+  // Відкриваємо модалку для цього індексу
   openModal(currentIndex);
-}
-
+});
+// Функція відкриття модалки
 function openModal(index) {
-  const { original, description } = images[index];
+  const { original, description } = images[index]; // беремо url і текст для картинки
 
   instance = basicLightbox.create(
     `
-    <div class="lightbox" role="dialog" aria-label="Перегляд зображень">
-      <button class="nav-btn nav-prev" aria-label="Попереднє зображення" type="button">
-        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="currentColor" viewBox="0 0 24 24">
-          <path d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
-        </svg>
-      </button>
-      <img class="modal-image" src="${original}" alt="${description}">
-      <button class="nav-btn nav-next" aria-label="Наступне зображення" type="button">
-        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="currentColor" viewBox="0 0 24 24">
-          <path d="M8.59 16.59 13.17 12 8.59 7.41 10 6l6 6-6 6z"/>
-        </svg>
-      </button>
-    </div>
-    `,
-    {
-      onShow: () => {
-        document.addEventListener('keydown', onKeydown);
+    <div class="lb-frame" role="dialog" aria-label="Перегляд зображень">
+      <div class="lb-top">
+        <div class="lb-counter"></div>
+        <button class="lb-close" aria-label="Закрити">×</button>
+      </div>
 
-        const root = instance.element();
-        root.querySelector('.nav-prev').addEventListener('click', showPrev);
-        root.querySelector('.nav-next').addEventListener('click', showNext);
+      <button class="lb-btn lb-prev" aria-label="Попереднє">‹</button>
+
+        <div class="lb-stage">
++        <img class="lb-img" src="${original}" alt="${description}">
++      </div>
+
+      <button class="lb-btn lb-next" aria-label="Наступне">›</button>
+
+      <div class="lb-caption"></div>
+    </div>
+  `,
+    {
+      // При показі модалки реєструємо обробники подій
+      onShow: i => {
+        document.addEventListener('keydown', onKeydown); // клавіатурні події
+        const root = i.element();
+
+        // Кнопка "Попереднє"
+        root.querySelector('.lb-prev').addEventListener('click', showPrev);
+        // Кнопка "Наступне"
+        root.querySelector('.lb-next').addEventListener('click', showNext);
+        // Кнопка закриття
+        root.querySelector('.lb-close').addEventListener('click', () => i.close());
+
+        // Закриття по кліку поза видимими елементами
+        root.addEventListener('click', e => {
+          if (e.target.closest('.lb-img, .lb-btn, .lb-close, .lb-caption, .lb-top')) return;
+          i.close();
+        });
+
+        // Оновлюємо лічильник і підпис
+        updateHud();
       },
-      onClose: () => {
-        document.removeEventListener('keydown', onKeydown);
-      },
+      // При закритті модалки видаляємо обробник клавіатури
+      onClose: () => document.removeEventListener('keydown', onKeydown),
     }
   );
 
-  instance.show();
+  instance.show(); // показуємо модалку
 }
 
+// Обробка клавіш: Esc - закрити, стрілки - навігація по картинках
 function onKeydown(e) {
   if (e.key === 'Escape') return instance.close();
   if (e.key === 'ArrowRight') showNext();
   if (e.key === 'ArrowLeft') showPrev();
 }
 
+// Флаг для контролю анімації, щоб не запускати нову поки іде поточна
+let isAnimating = false;
+// Показати наступну картинку (з анімацією)
 function showNext() {
-  currentIndex = (currentIndex + 1) % images.length;
-  updateModalImage();
+  animateTo((currentIndex + 1) % images.length, 'next');
 }
-
+// Показати попередню картинку (з анімацією)
 function showPrev() {
-  currentIndex = (currentIndex - 1 + images.length) % images.length;
-  updateModalImage();
+  animateTo((currentIndex - 1 + images.length) % images.length, 'prev');
 }
 
-function updateModalImage() {
-  const node = instance.element().querySelector('.modal-image');
-  node.src = images[currentIndex].original;
-  node.alt = images[currentIndex].description;
+// Функція анімації переходу між картинками
+function animateTo(newIndex, dir) {
+  if (isAnimating) return;
+  isAnimating = true;
+
+  const root = instance.element();
+  const img = root.querySelector('.lb-img');
+
+  // Очищаємо клас анімації перед новим циклом
+  img.classList.remove('slide-in-left', 'slide-in-right', 'slide-out-left', 'slide-out-right');
+  // Ставимо клас анімації "зникнення" для поточної картинки
+  img.addEventListener('animationend', handleOutEnd, { once: true });
+  img.classList.add(dir === 'next' ? 'slide-out-left' : 'slide-out-right');
+
+  // Функція, яка відпрацьовує після завершення анімації зникнення
+  function handleOutEnd() {
+    currentIndex = newIndex;
+    img.src = images[currentIndex].original;
+    img.alt = images[currentIndex].description;
+    updateHud();
+
+    // Знімаємо клас анімації "зникнення"
+    img.classList.remove('slide-out-left', 'slide-out-right');
+    img.addEventListener(
+      'animationend',
+      () => {
+        isAnimating = false; // розблоковуємо анімації для наступного переходу
+      },
+      { once: true }
+    );
+    // Ставимо клас анімації "появи" для нової картинки
+    img.classList.add(dir === 'next' ? 'slide-in-right' : 'slide-in-left');
+  }
+}
+
+// Оновлює HUD (лічильник і підпис) у модальному вікні
+function updateHud() {
+  const root = instance.element();
+  root.querySelector('.lb-counter').textContent = `${currentIndex + 1}/${images.length}`;
+  root.querySelector('.lb-caption').textContent = images[currentIndex].description || '';
 }

@@ -1,88 +1,222 @@
 :root {
-  /* transition */
-  --trans-norm: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --trans-norm: 250ms cubic-bezier(0.4, 0, 0.2, 1); /* тривалість і функція переходу */
+  --lb-slide-dur: 260ms; /* час анімації для слайду зображення */
 }
 
-html {
-  box-sizing: border-box;
+/* ---------- Тло лайтбокса ---------- */
+.basicLightbox {
+  background: rgba(0, 0, 0, 0.86) !important; /* затемнення фону overlay */
 }
 
+/* ---------- Галерея ---------- */
 .gallery {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 24px;
-  width: 1128px;
-
-  list-style: none;
-  margin-left: auto;
-  margin-right: auto;
+  display: flex; /* розташування елементів по лінії */
+  flex-wrap: wrap; /* перенесення на новий рядок */
+  gap: 24px; /* проміжок між картинками */
+  width: 1128px; /* ширина контейнера */
+  list-style: none; /* прибрати маркери списку */
+  margin: 0 auto; /* центрування за горизонталлю */
+  padding: 24px 0; /* вертикальний padding */
 }
-
 .gallery-item {
-  flex-basis: calc((100% - 2 * 24px) / 3);
+  flex-basis: calc((100% - 48px) / 3); /* ширина однієї картинки в 3 колонки з урахуванням gap */
 }
-
-.gallery-link:hover {
-  cursor: pointer;
+.gallery-link {
+  display: block; /* щоб лінк заповнював весь блок */
 }
-
 .gallery-image {
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  transition: transform var(--trans-norm);
-}
-
-.gallery-image:hover {
-  transform: scale(1.044);
-}
-
-/* Контейнер модалки */
-.lightbox {
-  position: relative; /* важливо для абсолютного позиціонування кнопок */
-  display: inline-block; /* розмір за картинкою */
-}
-
-/* Зображення в модальному вікні */
-.modal-image {
-  max-width: 90vw;
-  max-height: 90vh;
+  object-fit: cover; /* обрізання зображення під розмір */
   display: block;
+  transition: transform var(--trans-norm); /* плавне масштабування */
+}
+.gallery-image:hover {
+  transform: scale(1.044); /* збільшення на hover */
 }
 
-/* Кнопки навігації */
-.nav-btn {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  border: none;
-  background: transparent;
-  color: #000; /* чорні стрілки */
+/* ---------- Лайтбокс: основний grid-контейнер ----------- */
+/* lb-frame - це основний контейнер модалки, який розбиває вміст на сітку */
+.lb-frame {
+  width: 100vw; /* ширина на весь вікно браузера */
+  height: 100vh; /* висота на весь вікно браузера */
+  display: grid; /* CSS Grid */
+  grid-template-rows: 56px 1fr auto; /* три рядки: верхня панель(56px), основне зображення (1fr), підпис (auto) */
+  grid-template-columns: 72px 1fr 72px; /* три колонки: кнопка "назад"(72px), зображення (1fr), кнопка "вперед"(72px) */
+  align-items: center; /* вертикальне вирівнювання по центру в кожній клітинці */
+  justify-items: center; /* горизонтальне вирівнювання по центру в кожній клітинці */
+}
+
+/* ---------- Верхня панель: лічильник і кнопка "закрити" ---------- */
+.lb-top {
+  grid-column: 1 / -1; /* займає всю ширину 3-х колонок */
+  grid-row: 1; /* перший рядок */
+  width: 100%;
+  height: 100%;
+  display: flex; /* гнучкий контейнер */
+  align-items: center; /* вертикальне вирівнювання по центру */
+  justify-content: space-between; /* розподілення елементів по краях */
+  padding: 0 24px; /* відступи з боків */
+}
+.lb-counter {
+  color: #fff; /* колір тексту */
+  font: 15px/1.2 system-ui, -apple-system, 'Segoe UI', Roboto, Arial; /* шрифт */
+}
+.lb-close {
+  appearance: none; /* прибрати стандартний вигляд */
+  background: transparent; /* прозорий фон */
+  border: 0;
   cursor: pointer;
-  padding: 12px;
-  opacity: 0.7;
-  transition: opacity 0.2s ease;
+  color: #fff;
+  font-size: 28px;
+  line-height: 1;
+  opacity: 0.9;
+}
+.lb-close:hover {
+  opacity: 1; /* підсвітка при наведенні */
 }
 
-.nav-btn:hover,
-.nav-btn:focus {
-  opacity: 1;
-  outline: none;
+/* ---------- Кнопки навігації (стрілки) по боках, в своїх колонках ---------- */
+.lb-btn {
+  appearance: none; /* прибрати стандартний вигляд */
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  color: #fff;
+  font-size: 36px;
+  line-height: 1;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.08); /* невелика прозорість */
+}
+.lb-btn:hover {
+  background: rgba(255, 255, 255, 0.14); /* підсвітка при наведенні */
+}
+.lb-prev {
+  grid-column: 1; /* перша колонка */
+  grid-row: 2; /* другий рядок (зображення) */
+}
+.lb-next {
+  grid-column: 3; /* третя колонка */
+  grid-row: 2;
 }
 
-.nav-prev {
-  left: -60px;
-} /* відступ від лівого краю */
-.nav-next {
-  right: -60px;
-} /* відступ від правого краю */
+/* ---------- Зображення у центральній клітинці grid ---------- */
+.lb-img {
+  grid-column: 2; /* друга колонка */
+  grid-row: 2; /* другий рядок */
+  max-width: 100%; /* максимум по ширині */
+  max-height: 100%; /* максимум по висоті */
+  width: auto;
+  height: auto;
+  object-fit: contain; /* масштабування без обрізання */
+  border-radius: 8px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.18);
 
-/* На вузьких екранах притиснемо кнопки ближче до зображення (Адаптив)*/
+  /* ВАЖЛИВО: Притискає зображення до низу другого рядка, щоб підпис був нижче */
+  align-self: end;
+  justify-self: center;
+}
+
+/* ---------- Підпис під зображенням ---------- */
+.lb-caption {
+  grid-column: 2; /* друга колонка */
+  grid-row: 3; /* третій рядок */
+  align-self: start; /* початок по вертикалі (зверху рядка) */
+  justify-self: start; /* початок по горизонталі (ліворуч) */
+  margin-top: 6px; /* відступ від зображення */
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.82);
+  color: #fff;
+  font-size: 18px;
+  font-weight: 500;
+  border-radius: 8px;
+  max-width: 100%;
+  white-space: nowrap; /* текст в один рядок */
+  overflow: hidden; /* приховує зайве */
+  text-overflow: ellipsis; /* виводить крапки при обрізанні тексту */
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
+/* ---------- Анімації слайдів ---------- */
+.lb-img {
+  will-change: transform, opacity; /* оптимізація анімації */
+}
+.lb-img.slide-out-left {
+  animation: lb-out-left var(--lb-slide-dur) ease forwards;
+}
+.lb-img.slide-out-right {
+  animation: lb-out-right var(--lb-slide-dur) ease forwards;
+}
+.lb-img.slide-in-left {
+  animation: lb-in-left var(--lb-slide-dur) ease forwards;
+}
+.lb-img.slide-in-right {
+  animation: lb-in-right var(--lb-slide-dur) ease forwards;
+}
+@keyframes lb-out-left {
+  to {
+    transform: translateX(-64px);
+    opacity: 0;
+  }
+}
+@keyframes lb-out-right {
+  to {
+    transform: translateX(64px);
+    opacity: 0;
+  }
+}
+@keyframes lb-in-left {
+  from {
+    transform: translateX(-64px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+@keyframes lb-in-right {
+  from {
+    transform: translateX(64px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* ---------- Адаптивність для мобільних ---------- */
 @media (max-width: 768px) {
-  .nav-prev {
-    left: 10px;
+  .lb-frame {
+    grid-template-columns: 56px 1fr 56px; /* трохи вужчі кнопки навігації */
   }
-  .nav-next {
-    right: 10px;
+  .lb-caption {
+    font-size: 16px; /* зменшений шрифт для підпису */
   }
+}
+
+/* ---------- Центральна сцена (опціональна) ---------- */
+.lb-stage {
+  grid-column: 2; /* центр гріда */
+  grid-row: 2;
+
+  /* Фіксований розмір, максимум по ширині та висоті */
+  width: min(var(--stage-w), calc(100vw - 72px - 72px));
+  height: min(var(--stage-h), calc(100vh - 56px - 56px));
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ---------- Box-sizing для всіх елементів ---------- */
+html {
+  box-sizing: border-box;
+}
+*,
+*::before,
+*::after {
+  box-sizing: inherit;
 }
