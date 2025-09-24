@@ -39,7 +39,7 @@
 /* lb-frame - це основний контейнер модалки, який розбиває вміст на сітку */
 .lb-frame {
   width: 100vw; /* ширина на весь вікно браузера */
-  height: 100vh; /* висота на весь вікно браузера */
+  height: 100dvh; /* висота на весь вікно браузера */
   display: grid; /* CSS Grid */
   grid-template-rows: 56px 1fr auto; /* три рядки: верхня панель(56px), основне зображення (1fr), підпис (auto) */
   grid-template-columns: 72px 1fr 72px; /* три колонки: кнопка "назад"(72px), зображення (1fr), кнопка "вперед"(72px) */
@@ -203,12 +203,12 @@
   grid-row: 2;
 
   /* Фіксований розмір, максимум по ширині та висоті */
-  width: min(var(--stage-w), calc(100vw - 72px - 72px));
-  height: min(var(--stage-h), calc(100vh - 56px - 56px));
+  width: min(1112px, calc(100vw - 48px)) !important; /* 24px поля зліва/справа */
+  height: min(640px, calc(100dvh - 120px)) !important; /* 56 top + ~64 низ (підпис/зазор) */
+  display: flex !important;
 
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  align-items: center !important;
+  justify-content: center !important;
 }
 
 /* ---------- Box-sizing для всіх елементів ---------- */
@@ -219,4 +219,23 @@ html {
 *::before,
 *::after {
   box-sizing: inherit;
+}
+/* Картинка всередині сцени */
+.lb-stage > .lb-img {
+  max-width: 100% !important;
+  max-height: 100% !important;
+  width: auto !important;
+  height: auto !important;
+  object-fit: contain !important;
+  border-radius: 8px;
+}
+
+/* Fallback: якщо з якоїсь причини .lb-stage немає,
+   обмежуємо безпосередньо саме зображення у фреймі */
+.lb-frame > .lb-img {
+  max-width: min(1112px, calc(100vw - 48px)) !important;
+  max-height: min(640px, calc(100dvh - 120px)) !important;
+  width: auto !important;
+  height: auto !important;
+  object-fit: contain !important;
 }
